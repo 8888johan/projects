@@ -1,43 +1,44 @@
-// Your Firebase configuration
-const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
-};
-
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
-
-document.getElementById('exercise-form').addEventListener('submit', function(event) {
-    event.preventDefault();
-    
-    const exercise = document.getElementById('exercise').value;
-    const duration = document.getElementById('duration').value;
-    
-    if (exercise && duration) {
-        const newExerciseRef = database.ref('exercises').push();
-        newExerciseRef.set({
-            exercise: exercise,
-            duration: duration
-        });
-        
-        // Clear input fields
-        document.getElementById('exercise').value = '';
-        document.getElementById('duration').value = '';
+const ctx = document.getElementById('exercise-chart').getContext('2d');
+let exerciseChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: [],
+        datasets: [{
+            label: 'Exercise Duration (minutes)',
+            data: [],
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
     }
 });
 
-database.ref('exercises').on('child_added', function(snapshot) {
-    const data = snapshot.val();
-    const exerciseList = document.getElementById('exercise-list');
-    
-    const listItem = document.createElement('li');
-    listItem.textContent = `${data.exercise}: ${data.duration} minutes`;
-    
-    exerciseList.appendChild(listItem);
+// Update chart with data
+function updateChart(exercises) {
+    const labels = exercises.map(ex => new Date(ex.timestamp).toLocaleDateString());
+    const data = exercises.map(ex => ex.duration);
+
+    exerciseChart.data.labels = labels;
+    exerciseChart.data.datasets[0].data = data;
+    exerciseChart.update();
+}
+
+auth.onAuthStateChanged(user => {
+    if (user) {
+        const userId = user.uid;
+        database.ref('users/' + userId + '/exercises').on('value', function(snapshot) {
+            const exercises = [];
+            snapshot.forEach(childSnapshot => {
+                exercises.push(childSnapshot.val());
+            });
+            updateChart(exercises);
+        });
+    }
 });
